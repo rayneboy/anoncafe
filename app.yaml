@@ -1,0 +1,49 @@
+application: anoncafe
+version: 1
+runtime: python
+api_version: 1
+threadsafe: true
+
+handlers:
+  
+# configuration file for web crawlers like googlebot and yahoo slurp
+- url: /robots\.txt
+  static_files: static/robots.txt
+  upload: static/robots\.txt
+  
+- url: /css
+  static_dir: static/css
+  secure: optional
+ 
+- url: /img
+  static_dir: static/img
+  secure: optional
+  
+- url: /js
+  static_dir: static/js
+  secure: optional
+  
+- url: /admin/.*
+  script: main.py
+  login: admin
+  auth_fail_action: unauthorized
+  
+- url: /.*
+  script: main.py
+  secure: optional
+
+error_handlers:
+  - file: default_error.html
+
+  - error_code: over_quota
+    file: over_quota.html
+  - error_code: dos_api_denial
+    file: over_quota.html
+  - error_code: timeout
+    file: over_quota.html
+      
+admin_console:
+  pages:
+  - name: admin
+    url: /admin
+    

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block home_quote %}
+	<div class="row-fluid">
+		<div class="span6 offset3">
+			<div id="quote-home">
+				<blockquote>
+					<p>{{ quote.content }}</p>
+					<small>{{ quote.source }}</small>
+				</blockquote>
+			</div>
+		</div>
+	</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+body {
+	padding-top: 40px;
+	padding-bottom: 40px;
+	background-color: whiteSmoke;
+}
+
+div#form-url {
+	max-width: 60%;
+	padding: 19px 29px 29px;
+	margin: 0 auto 20px;
+	background-color: white;
+	border: 1px solid #E5E5E5;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+}
+
+div#form-url * input#url-entry {
+	width: 90%;
+}
+
+div#quote-home {
+	padding: 19px 0px 0px 19px;
+	margin-top: 0px;
+	margin-right: auto;
+	margin-left: auto;
+	background-color: white;
+	border: 1px solid #E5E5E5;
+	-webkit-border-radius: 5px;
+}
+
+div#quote-home > blockquote > p {
+	font-size: 14px;
+}
+
+iframe {
+	scrolling: 'no';
+}
