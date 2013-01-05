@@ -15,6 +15,7 @@
 # By Kevin H <rayneboy1@gmail.com>
 
 from lib import BeautifulSoup, url_tools
+from lib.BeautifulSoup import Tag
 from lib.url_tools import *
 import config
 import string
@@ -34,11 +35,12 @@ HTML_URL_TAGS = frozenset([
   'form', 'frame',
   'head', 'html',
   'lowsrc',
-  'iframe', 'img', 'input', 'ins',
+  'img',
+  'iframe', 'input', 'ins',
   'link',
   'object',
   'q',
-  #'script', 'source',
+  'script', 'source',
   'video'
 ])
 
@@ -111,6 +113,8 @@ class ResponseTransformer(object):
                 if attr in HTML_URL_ATTRS:
                     link[attr] = self.fix_url(url)
                     
+        plantXSSMole(document)
+                    
         return document
                     
     def fix_url(self, url):
@@ -120,29 +124,44 @@ class ResponseTransformer(object):
         url = url.strip()
         
         # check if the scheme is supported
-        scheme = "%s://" % url_tools.get_scheme_from_url(self.response_url)
-        if scheme and scheme != 'http://' and scheme != 'https://' and scheme != '//':
+        scheme = url_tools.get_scheme_from_url(self.response_url)
+        if not (scheme.startswith('http') or scheme.startswith('https') or scheme.startswith('//')): 
+            logging.error('scheme not supported for url "%s" %s' % (url, scheme))
+            return url
+        
+        # check if the 'url' field is a special type
+        if url.startswith('#') or url.startswith('javascript'):
             return url
         
         # fix absolute URLs (i.e. href='http://hostname.net/path')
         if re.match(ABSOLUTE_URL_RE, url):
             if urlparse.urlsplit(url).netloc:
-                return '/' + url_tools.strip_scheme_from_url(url)
+                new_url = '/' + url_tools.strip_scheme_from_url(url)
+                logging.debug('absolute url transformation "%s" -> "%s"', url, new_url) 
+                return new_url 
         
         # fix protocol relative URLs (i.e. src='//hostname.com/path')
         if re.match(PROTOCOL_RELATIVE_URL_RE, url):
-            return url
+            new_url = '/' + url[len('//'):] 
+            logging.debug('protocol absolute url transformation "%s"', url, new_url)
+            return new_url
                     
         # fix root relative URLs (i.e. src='/subpath_of_host_url/path')
         if re.match(ROOT_RELATIVE_URL_RE, url):
             if url == '/':
-                return config.PROXY_SITE + host_name
+                new_url = config.PROXY_SITE + host_name
             else:
-                return '/' + host_name + url_tools.get_path_from_url(url)
+                new_url = '/' + host_name + url_tools.get_path_from_url(url)
+
+            logging.debug('root relative transformation "%s"', url, new_url)                
+            return new_url
+            
         
         # fix directory relative URLs (i.e. src='file_in_the_same_directory/path')
         if re.match(DIRECTORY_RELATIVE_URL_RE, url):
-            return config.PROXY_SITE + popd(self.response_url) + '/' + url
+            new_url = config.PROXY_SITE + popd(self.response_url) + '/' + url
+            logging.debug('directory relative transformation "%s"', url, new_url) 
+            return new_url 
         
         # ignore traversal relative URLs for now (i.e. src='../another_dir_file')
         if re.match(TRAVERSAL_RELATIVE_URL_RE, url):
@@ -150,3 +169,32 @@ class ResponseTransformer(object):
         
         return url
                     
+def plantXSSMole(document):
+    xss = BeautifulSoup.BeautifulSoup(XSS)
+    body = document.body
+    
+    if not body: return
+    
+    body['onload'] = 'transmitDataToSource()'
+    
+    mole = xss.iframe
+    wire = xss.script
+    
+    body.insert(len(body.contents), mole)
+    body.insert(len(body.contents), wire)
+    
+XSS = """
+            <iframe id="mole" src='' height='0' width='0' frameborder='0'></iframe>
+
+            <script type="text/javascript">
+                function transmitDataToSource() {
+                    var height = document.body.scrollHeight;
+
+                    // transmit data 'on the wire' to the parent through the 'mole' iframe
+                    var wire = document.getElementById('mole');
+
+                    // use a cachebuster to stop browser caching interfering
+                    wire.src = '%(script)s?height='+height+'&cacheb='+Math.random();
+                }
+            </script>
+        """ % {'script': config.PROXY_SITE + 'js/xss.html'}

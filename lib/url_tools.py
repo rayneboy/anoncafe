@@ -40,9 +40,8 @@ def get_host_from_url(url):
         (eg 'scheme://hostname/path/subpath/file#fragment') """
     
     # strip URLs that have a scheme such as a leading 'http(s)://'
-    url_components = urlparse.urlsplit(url)
-    scheme = url_components.scheme
-    if scheme: url = url[len('%s://' % scheme):]
+    scheme = get_scheme_from_url(url)
+    if scheme: url = url[len(scheme):]
     
     # determine the host name of the url, which is left of the path separator
     path_separator = url.find("/")
@@ -78,9 +77,14 @@ def get_scheme_from_url(url):
     if url.startswith('//'):
         return '//'
     else:
-        SCHEME_RE = r'(^((?P<scheme>([^:/?#]+)):)?/{0,2})'
-        scheme = re.match(SCHEME_RE, url).group('scheme')
+        SCHEME_RE = r'(?P<scheme>([^:/?#]+)?:/{0,2})'
+        match = re.match(SCHEME_RE, url)
         
+        if match:
+            scheme = match.group('scheme')
+        else:
+            scheme = ''
+
         return scheme
 
 def join(scheme, base, path):
@@ -89,6 +93,7 @@ def join(scheme, base, path):
     return urlparse.urljoin(scheme + '://' + base.lstrip('/'), path.lstrip('/'))
 
 def popd(path):
+    """ return the top directory of the given path """
     last_path_sep = path.rfind('/')
     
     if last_path_sep == -1:
@@ -151,4 +156,4 @@ def validate_url(input_url, context={}):
     return input_url
 
 def dict_to_s(d):
-    return json.dumps(d, sort_keys=True, indent=4, separators=(',', ': '))
+    return json.dumps(dict(d), sort_keys=True, indent=4, separators=(',', ': '))

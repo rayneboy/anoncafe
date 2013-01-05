@@ -1,17 +1,82 @@
-<!DOCTYPE HTML>
-<html>
-	<head>
-		<title>anoncafe - admin</title>
-  		<link rel="stylesheet" href="static/dummy.css" type="text/css" charset="utf-8"/>
-  		<link href="static/css/bootstrap.min.css" rel="stylesheet" media="screen">
-  		<link rel="icon" href="/favicon.ico" type="image/dummy.icon" />
-	</head>
-	<body>
-		<div id="queryBoxFormWrapper">
-			<form name="adminLoginForm" action="" method="post" accept-charset="utf-8">
-    			<input type="text" name="adminLoginText" placeholder="username"/>
-    			<input id="adminLoginButton" type="submit" value="login"/>
-  			</form>
-  		</div>
-	</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}
+	anoncafe - admin
+{% endblock %}
+
+{% block stylesheets %}
+	<link rel="stylesheet" href="css/admin.css" media="screen" />
+{% endblock %}
+
+{% block content %}
+	<!-- MENU -->
+	<div class="row-fluid">
+		<div class="span6 offset3">
+			<div id="admin-panel">
+				<ul class="nav nav-tabs">
+  					<li class="active" id="admin-panel-main">
+    					<a href="#main">Main</a>
+  					</li>
+  					<li id="admin-panel-cache">
+  						<a href="#cache">Cache</a>
+  					</li>
+  					<li id="admin-panel-logs">
+  						<a href="#logs">Logs</a>
+  					</li>
+				</ul>
+				
+				<div id="admin-menu-content" class="tab-content">
+					<div id="main" class="tab-pane active">Welcome, {{ admin_name }}!</div>
+					
+					<div id="cache" class="tab-pane">
+						<table id="cache-table" class="table table-bordered">
+							<button id="flush-cache-button" class="btn btn-inverse btn-small pull-right" type="submit">Flush Cache</button>
+						
+							{# cannot iterate by (key, val) in django 0.96 #} 
+							{% for item in cache %}
+								<tr>
+									<td>{{ item.0 }}</td>
+									<td>{{ item.1 }}</td>
+								</tr>
+							{% endfor %}								
+						</table>
+					</div>
+					
+					<div id="logs" class="tab-pane">{{ logs }}</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+{% endblock %}
+
+{% block scripts %}
+	<script type="text/javascript">
+		// for tab menu items
+		$("li[id*='admin-panel'] a").click(function (e) {
+  			e.preventDefault();
+  			$(this).tab('show');
+		})
+		
+		// for the button that flushes the cache
+		$("button#flush-cache-button").click(function (e) {
+			var data = 'admin_action=flush_cache';
+			
+			$.ajax({
+  				type: 'POST',
+  				url: '/admin',
+  				data: data,
+  				dataType: 'json',
+  				success: function(cache_statistics) {
+  					
+  					for (var key in cache_statistics) {
+  						var td1 = $("table#cache-table td").filter(":contains('" + key + "')");
+  						var td2 = td1.next();
+  						
+  						td2.text(cache_statistics[key]);
+  					}
+  				}
+			})
+		})
+	</script>
+{% endblock %}

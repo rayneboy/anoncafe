@@ -1,17 +1,26 @@
 {% extends "base.html" %}
 
-{% block stylesheets %}
-	<link rel="stylesheet" href="css/home.css" media="screen" />
+{% block title %}
+	anoncafe - proxy
 {% endblock %}
 
-{% block title %}
-	anoncafe - home
+{% block stylesheets %}
+	<link rel="stylesheet" href="css/proxy.css" media="screen" />
 {% endblock %}
 
 {% block content %}
+	<script type="text/javascript">
+		// Resize iframe to full height
+  		function resizeIframe(height) {
+    		var iframe = document.getElementById('mirror')
+    		new_height = parseInt(height) + 60
+    		iframe.height = new_height + 'px';
+  		}
+	</script>
+
 	<!-- FORM -->
 	<div class="row-fluid">
-		<div class="span6 offset3">
+		<div class="span12">
 			<div id="form-url">
 				<form name="form-url" class="form-inline" action="" method="post" accept-charset="utf-8">
 					<fieldset>
@@ -19,12 +28,10 @@
         					
 					<div class="input-prepend input-append">
 						<span class="add-on"><label id="label-scheme" for="input-url">http://</label></span>
-						<input id="input-url" name="url_entry" class="span11" type="text" size="50" maxlength="256" placeholder="enter a url address..." />
+						<input id="input-url" name="url_entry" class="span8" type="text" size="50" maxlength="256" value="{{ input_url }}" placeholder="enter a url address..." />
 						<input class="btn" type="submit" value="go →">
 					</div>
-				</form>
-						
-				<div class="clearfix">
+					
 					<label class="checkbox">
 						<input id="enable-ssl" name="enable-ssl" type="checkbox" />
 						<span>SSL Enabled</span>
@@ -34,20 +41,15 @@
 						<input id="enable-link-menu" name="enable-link-menu" type="checkbox" />
 						<span>Link Menu Enabled</span>
 					</label>
-				</div>
+				</form>
 			</div>
 		</div>
 	</div>
-
-	<!-- QUOTE -->
+	
+	<!-- REFLECTION -->
 	<div class="row-fluid">
-		<div class="span6 offset3">
-			<div id="quote-home">
-				<blockquote>
-					<p>{{ quote.content }}</p>
-					<small>{{ quote.source }}</small>
-				</blockquote>
-			</div>
+		<div id="mirror-content">
+			<iframe src="{{ mirror_url }}" id="mirror" width="100%" marginheight="0" scrolling="no" frameborder="0"></iframe>
 		</div>
 	</div>
 {% endblock %}
@@ -64,10 +66,14 @@
 				}
 			});
 
+			// clear the textbox of the form
 			$("input#input-url").focus(function() {
-				$(this).attr('placeholder', '');
+				if ($(this).val() == '') {
+					$(this).attr('placeholder', '');
+				}
 			})
 
+			// add the textbox's placeholder text
 			$("input#input-url").blur(function() {
 				$(this).attr('placeholder', 'enter a url address...');
 			})

@@ -4,7 +4,8 @@ body {
 	background-color: whiteSmoke;
 }
 
-div#form-url {
+div#admin-panel {
+	max-width: 60%;
 	padding: 19px 29px 29px;
 	margin: 0 auto 20px;
 	background-color: white;
@@ -14,21 +15,19 @@ div#form-url {
 	border-radius: 5px;
 }
 
-div#form-url * input#url-entry {
-	max-width: 60%;
-}
-
-div#quote-home {
-	padding: 19px 0px 0px 19px;
-	margin-top: 0px;
-	margin-right: auto;
-	margin-left: auto;
+div#cache {
+	.bs-docs-example {
+	position: relative;
+	margin: 15px 0;
+	padding: 39px 19px 14px;
 	background-color: white;
-	border: 1px solid #E5E5E5;
-	-webkit-border-radius: 5px;
+	border: 1px solid #DDD;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	}
 }
 
-div#quote-home > blockquote > p {
-	font-size: 14px;
+table#cache-table {
+	margin-top: 20px;
 }
-

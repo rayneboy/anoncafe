@@ -1,6 +1,4 @@
 body {
-	padding-top: 40px;
-	padding-bottom: 40px;
 	background-color: whiteSmoke;
 }
 
@@ -18,17 +16,12 @@ div#form-url * input#url-entry {
 	max-width: 60%;
 }
 
-div#quote-home {
-	padding: 19px 0px 0px 19px;
-	margin-top: 0px;
-	margin-right: auto;
-	margin-left: auto;
-	background-color: white;
-	border: 1px solid #E5E5E5;
-	-webkit-border-radius: 5px;
+/* for chrome only */
+iframe {
+	scrolling: 'no';
 }
 
-div#quote-home > blockquote > p {
-	font-size: 14px;
+/* http://stackoverflow.com/questions/1691873/safari-chrome-webkit-cannot-hide-iframe-vertical-scrollbar */
+iframe::-webkit-scrollbar {  
+    display: none;
 }
-

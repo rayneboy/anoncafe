@@ -26,7 +26,7 @@ import logging
 import sys
 
 HTTP_PREFIX = "http://"
-FETCH_ATTEMPTS = 2
+FETCH_ATTEMPTS = 3
 
 class HomeController(webapp.RequestHandler):
     
@@ -43,14 +43,16 @@ class HomeController(webapp.RequestHandler):
         input_url = url_tools.validate_url(self.request.get("url_entry"), self.context);
         
         if input_url:
-            # switch to ProxyHandler and send a GET request for input_url
-            return self.redirect("/" + input_url)
+            self.context['input_url'] = input_url
+            self.context['mirror_url'] = config.PROXY_SITE + input_url
+            self.response.out.write(template.render('template/proxy.html', self.context))
         else:
             logging.debug("user entered invalid input_url %s" % input_url)
             return self.redirect("/")
             
 class ProxyController(webapp.RequestHandler):
     
+    # TODO: solve the problem of links with '/'
     record_last_host = config.PROXY_SITE
 
     def get(self, target_host):
@@ -79,11 +81,12 @@ class ProxyController(webapp.RequestHandler):
             return self.error(404)
         
         # TODO: investigate why self.response.headers = mirror_content.headers doesn't work
+        
         # write out the response payload 
         for key in mirror_content.headers.keys():
             self.response.headers[key] = mirror_content.headers[key]
+            
         self.response.out.write(mirror_content.content)
-        #self.response.out.write(template.render('template/proxy.html', {'mirror_content': mirror_content.content}))
 
     def get_mirror_content(self, mirror_url):
         # attempt a cache lookup
@@ -109,7 +112,7 @@ class ProxyController(webapp.RequestHandler):
         # http://www.w3.org/Protocols/rfc2616/rfc2616-sec8.html 8.1.3 Proxy Servers
         adjusted_headers = dict(self.request.headers)
         adjusted_headers['Connection'] = 'close'
-        logging.debug("request headers '%s' of '%s'", url_tools.dict_to_s(adjusted_headers), mirror_url)
+        logging.debug("request headers '%s' of url: '%s'", url_tools.dict_to_s(adjusted_headers), mirror_url)
                       
         try:
             # fetch the requested url
@@ -144,8 +147,8 @@ class AdminController(webapp.RequestHandler):
             template_context = {
                  'admin_name': user.nickname(),
                  'logout': users.create_logout_url("/home"),
-                 'cache': str(memcache.get_stats()),
-                 'logs': ''
+                 'cache': memcache.get_stats().items(),
+                 'logs': '' # TODO: make an easy administrator logging system
             }
             
             self.response.out.write(template.render('template/admin.html', template_context))
@@ -154,5 +157,9 @@ class AdminController(webapp.RequestHandler):
             self.redirect(users.create_login_url("/admin"))
 
     def post(self):
-        self.response.headers['content-type'] = 'text/plain'
-        self.response.out.write('Flush successful: %s' % memcache.flush_all())
+        action = self.request.get("admin_action")
+        
+        if (action == 'flush_cache'):
+            memcache.flush_all()
+        
+        self.response.out.write(url_tools.dict_to_s(memcache.get_stats()))
